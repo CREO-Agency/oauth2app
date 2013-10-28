@@ -4,9 +4,10 @@ try: import simplejson as json
 except ImportError: import json
 from base64 import b64encode
 from django.utils import unittest
-from django.contrib.auth.models import User
-from oauth2app.models import Client
+from parse_rest.user import User
+from oauth2app.objects import Client
 from django.test.client import Client as DjangoTestClient
+from .base import BaseTestCase
 
 
 USER_USERNAME = "testuser"
@@ -19,29 +20,11 @@ CLIENT_EMAIL = "client@example.com"
 REDIRECT_URI = "http://example.com/callback"
 
 
-class GrantTypeTestCase(unittest.TestCase):
+class GrantTypeTestCase(BaseTestCase):
 
     user = None
     client_holder = None
     client_application = None
-
-    def setUp(self):
-        self.user = User.objects.create_user(
-            USER_USERNAME,
-            USER_EMAIL,
-            USER_PASSWORD)
-        self.user.first_name = USER_FIRSTNAME
-        self.user.last_name = USER_LASTNAME
-        self.user.save()
-        self.client = User.objects.create_user(CLIENT_USERNAME, CLIENT_EMAIL)
-        self.client_application = Client.objects.create(
-            name="TestApplication",
-            user=self.client)
-
-    def tearDown(self):
-        self.user.delete()
-        self.client.delete()
-        self.client_application.delete()
 
     def test_00_grant_type_client_credentials(self):
         user = DjangoTestClient()

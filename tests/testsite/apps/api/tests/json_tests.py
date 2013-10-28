@@ -2,7 +2,7 @@
 
 try: import simplejson as json
 except ImportError: import json
-from .base import *
+from .base import BaseTestCase
 
 class JSONTestCase(BaseTestCase):
 

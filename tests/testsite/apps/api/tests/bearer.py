@@ -2,7 +2,8 @@
 
 try: import simplejson as json
 except ImportError: import json
-from .base import *
+from .base import BaseTestCase
+from django.test.client import Client as DjangoTestClient
 
 
 class BearerTestCase(BaseTestCase):

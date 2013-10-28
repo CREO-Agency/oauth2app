@@ -2,8 +2,8 @@
 
 try: import simplejson as json
 except ImportError: import json
-from django.contrib.auth.models import User
-from oauth2app.models import Client
+from oauth2app.objects import Client
+from parse_rest.user import User
 from django.test.client import Client as DjangoTestClient
 from django.utils import unittest
 from base64 import b64encode
@@ -27,15 +27,16 @@ class BaseTestCase(unittest.TestCase):
     client_application = None
 
     def setUp(self):
-        self.user = User.objects.create_user(
+        self.user = User.signup(
             USER_USERNAME,
-            USER_EMAIL,
-            USER_PASSWORD)
+            USER_PASSWORD,
+            email=USER_EMAIL,
+        )
         self.user.first_name = USER_FIRSTNAME
         self.user.last_name = USER_LASTNAME
         self.user.save()
-        self.client = User.objects.create_user(CLIENT_USERNAME, CLIENT_EMAIL)
-        self.client_application = Client.objects.create(
+        self.client = User.signup(CLIENT_USERNAME, "12345", email=CLIENT_EMAIL)
+        self.client_application = Client.Query.create(
             name="TestApplication",
             user=self.client)
 
