@@ -20,6 +20,11 @@ DATABASES = {
     }
 }
 
+PARSE_SETTINGS = {
+    "APP_ID": "zfDpU4nwd7Mw71sMpjZme2RY9Q9J35ZyAexkScFZ",
+    "REST_KEY": "UUF4MUg6FnWe3efQMlFicoLicIDeB9sThfQTznqd",
+}
+
 FIXTURE_DIRS = (
    os.path.join(os.path.dirname(__file__), 'apps/account/fixtures'),
 )
