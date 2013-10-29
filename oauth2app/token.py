@@ -252,7 +252,7 @@ class TokenGenerator(object):
         if self.password is None:
             raise InvalidRequest('No password')
         if self.scope is not None:
-            access_ranges = AccessRange.objects.filter(key__in=list(self.scope))
+            access_ranges = AccessRange.Query.filter(key__in=list(self.scope))
             access_ranges = set(access_ranges.values_list('key', flat=True))
             difference = access_ranges.symmetric_difference(self.scope)
             if len(difference) != 0:
@@ -290,7 +290,7 @@ class TokenGenerator(object):
         if self.refresh_token is None:
             raise InvalidRequest('No refresh_token')
         try:
-            self.access_token = AccessToken.objects.get(
+            self.access_token = AccessToken.Query.get(
                 refresh_token=self.refresh_token)
         except QueryResourceDoesNotExist:
             raise InvalidRequest(
