@@ -53,7 +53,6 @@ class BaseTestCase(unittest.TestCase):
             "client_id":self.client_application.key,
             "redirect_uri":REDIRECT_URI,
             "response_type":"code"}
-        #import pdb; pdb.set_trace()
         response = user.get("/oauth2/authorize_no_scope?%s" % urlencode(parameters))
         qs = parse_qs(urlparse(response['location']).query)
         code = qs['code']
