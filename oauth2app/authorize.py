@@ -8,12 +8,14 @@ try: import simplejson as json
 except ImportError: import json
 from django.http import absolute_http_url_re, HttpResponseRedirect
 from urllib import urlencode
+from parse_rest.query import QueryResourceDoesNotExist, QueryResourceMultipleResultsReturned
 from .consts import ACCESS_TOKEN_EXPIRATION, REFRESHABLE
 from .consts import CODE, TOKEN, CODE_AND_TOKEN
 from .consts import AUTHENTICATION_METHOD, MAC, BEARER, MAC_KEY_LENGTH
 from .exceptions import OAuth2Exception
 from .lib.uri import add_parameters, add_fragments, normalize
-from .models import Client, AccessRange, Code, AccessToken, KeyGenerator
+from .objects import Client, AccessRange, Code, AccessToken 
+from .utils import KeyGenerator
 
 
 class AuthorizationException(OAuth2Exception):
@@ -116,12 +118,13 @@ class Authorizer(object):
             raise OAuth2Exception("Possible values for authentication_method"
                 " are oauth2app.consts.MAC and oauth2app.consts.BEARER")
         self.authentication_method = authentication_method
-        if scope is None:
-            self.authorized_scope = None
-        elif isinstance(scope, AccessRange):
-            self.authorized_scope = set([scope.key])
-        else:
+        try:
             self.authorized_scope = set([x.key for x in scope])
+        except TypeError:
+            try:
+                self.authorized_scope = set([scope.key])
+            except AttributeError:
+                self.authorized_scope = None
 
     def __call__(self, request):
         """Validate the request. Returns an error redirect if the
@@ -173,8 +176,8 @@ class Authorizer(object):
         if self.client_id is None:
             raise InvalidRequest('No client_id')
         try:
-            self.client = Client.objects.get(key=self.client_id)
-        except Client.DoesNotExist:
+            self.client = Client.Query.get(key=self.client_id)
+        except QueryResourceDoesNotExist:
             raise InvalidClient("client_id %s doesn't exist" % self.client_id)
         # Redirect URI
         if self.redirect_uri is None:
@@ -202,8 +205,8 @@ class Authorizer(object):
         if self.authorized_scope is not None and self.scope is None:
             self.scope = self.authorized_scope
         if self.scope is not None:
-            self.access_ranges = AccessRange.objects.filter(key__in=self.scope)
-            access_ranges = set(self.access_ranges.values_list('key', flat=True))
+            self.access_ranges = AccessRange.Query.filter(key__in=list(self.scope))
+            access_ranges = set([ar.key for ar in self.access_ranges])
             difference = access_ranges.symmetric_difference(self.scope)
             if len(difference) != 0:
                 raise InvalidScope("Following access ranges do not "
@@ -280,22 +283,28 @@ class Authorizer(object):
             parameters = {}
             fragments = {}
             if self.scope is not None:
-                access_ranges = list(AccessRange.objects.filter(key__in=self.scope))
+                access_ranges = list(AccessRange.Query.filter(key__in=list(self.scope)))
             else:
                 access_ranges = []
             if RESPONSE_TYPES[self.response_type] & CODE != 0:
-                code = Code.objects.create(
-                    user=self.user,
+                code = Code(
                     client=self.client,
-                    redirect_uri=self.redirect_uri)
-                code.scope.add(*access_ranges)
+                    user=self.user,
+                    redirect_uri=self.redirect_uri
+                )
                 code.save()
+                code.scope.add(*access_ranges)
                 parameters['code'] = code.key
             if RESPONSE_TYPES[self.response_type] & TOKEN != 0:
-                access_token = AccessToken.objects.create(
+                access_token = AccessToken.Query.create(
                     user=self.user,
-                    client=self.client)
-                access_token.scope = access_ranges
+                    client=self.client,
+                )
+                try:
+                    access_token.scope.clear()
+                except:
+                    pass
+                access_token.scope.add(*access_ranges)
                 fragments['access_token'] = access_token.token
                 if access_token.refreshable:
                     fragments['refresh_token'] = access_token.refresh_token

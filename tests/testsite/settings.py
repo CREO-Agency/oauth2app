@@ -21,8 +21,8 @@ DATABASES = {
 }
 
 PARSE_SETTINGS = {
-    "APP_ID": "zfDpU4nwd7Mw71sMpjZme2RY9Q9J35ZyAexkScFZ",
-    "REST_KEY": "UUF4MUg6FnWe3efQMlFicoLicIDeB9sThfQTznqd",
+    "APP_ID": "xGJbCq7Ve2ZdmOOXgfwjFN1HT1ooV8yo6YFoNFq7",
+    "REST_KEY": "FOYp9Viol6CRVqBuo7dLfttvt8S2bExvRYpmqpj4",
 }
 
 FIXTURE_DIRS = (
@@ -90,6 +90,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'testsite.apps.api',
     'testsite.apps.oauth2',
+    'django_parse_rest',
     'oauth2app')
 
 LOGGING = {
@@ -109,6 +110,10 @@ LOGGING = {
         },
     }
 }
+
+AUTHENTICATION_BACKENDS = (
+    'django_parse_rest.authentication.ParseBackend',
+)
 
 TEST_RUNNER = 'django-test-coverage.runner.run_tests'
 COVERAGE_MODULES = (

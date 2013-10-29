@@ -15,8 +15,9 @@ from .consts import ACCESS_TOKEN_EXPIRATION, REFRESH_TOKEN_LENGTH
 from .consts import AUTHENTICATION_METHOD, MAC, BEARER, MAC_KEY_LENGTH
 from .consts import REFRESHABLE
 from .lib.uri import normalize
-from .models import Client, AccessRange, Code, AccessToken, TimestampGenerator
-from .models import KeyGenerator
+from .objects import Client, AccessRange, Code, AccessToken, TimestampGenerator
+from .utils import KeyGenerator
+from parse_rest.query import QueryResourceDoesNotExist
 
 
 class AccessTokenException(OAuth2Exception):
@@ -186,13 +187,13 @@ class TokenGenerator(object):
         if self.client_id is None:
             raise InvalidRequest('No client_id')
         try:
-            self.client = Client.objects.get(key=self.client_id)
-        except Client.DoesNotExist:
+            self.client = Client.Query.get(key=self.client_id)
+        except QueryResourceDoesNotExist:
             raise InvalidClient("client_id %s doesn't exist" % self.client_id)
         # Scope
         if self.scope is not None:
-            access_ranges = AccessRange.objects.filter(key__in=self.scope)
-            access_ranges = set(access_ranges.values_list('key', flat=True))
+            access_ranges = AccessRange.Query.filter(key__in=list(self.scope))
+            access_ranges = set([ar.key for ar in access_ranges])
             difference = access_ranges.symmetric_difference(self.scope)
             if len(difference) != 0:
                 raise InvalidScope("Following access ranges doesn't exist: "
@@ -232,8 +233,8 @@ class TokenGenerator(object):
             raise InvalidRequest('No code_key provided')
         self._validate_access_credentials()
         try:
-            self.code = Code.objects.get(key=self.code_key)
-        except Code.DoesNotExist:
+            self.code = Code.Query.get(key=self.code_key)
+        except QueryResourceDoesNotExist:
             raise InvalidRequest('No such code: %s' % self.code_key)
         now = TimestampGenerator()()
         if self.code.expire < now:
@@ -251,7 +252,7 @@ class TokenGenerator(object):
         if self.password is None:
             raise InvalidRequest('No password')
         if self.scope is not None:
-            access_ranges = AccessRange.objects.filter(key__in=self.scope)
+            access_ranges = AccessRange.objects.filter(key__in=list(self.scope))
             access_ranges = set(access_ranges.values_list('key', flat=True))
             difference = access_ranges.symmetric_difference(self.scope)
             if len(difference) != 0:
@@ -291,7 +292,7 @@ class TokenGenerator(object):
         try:
             self.access_token = AccessToken.objects.get(
                 refresh_token=self.refresh_token)
-        except AccessToken.DoesNotExist:
+        except QueryResourceDoesNotExist:
             raise InvalidRequest(
                 'No such refresh token: %s' % self.refresh_token)
         self._validate_access_credentials()
@@ -367,27 +368,27 @@ class TokenGenerator(object):
 
     def _get_authorization_code_token(self):
         """Generate an access token after authorization_code authorization."""
-        access_token = AccessToken.objects.create(
+        access_token = AccessToken.Query.create(
             user=self.code.user,
             client=self.client,
             refreshable=self.refreshable)
         if self.authentication_method == MAC:
             access_token.mac_key = KeyGenerator(MAC_KEY_LENGTH)()
-        access_ranges = AccessRange.objects.filter(key__in=self.scope) if self.scope else []
-        access_token.scope = access_ranges
+        access_ranges = AccessRange.Query.filter(key__in=list(self.scope)) if self.scope else []
+        access_token.scope.add(*access_ranges)
         access_token.save()
         self.code.delete()
         return access_token
 
     def _get_password_token(self):
         """Generate an access token after password authorization."""
-        access_token = AccessToken.objects.create(
+        access_token = AccessToken.Query.create(
             user=self.user,
             client=self.client,
             refreshable=self.refreshable)
         if self.authentication_method == MAC:
             access_token.mac_key = KeyGenerator(MAC_KEY_LENGTH)()
-        access_ranges = AccessRange.objects.filter(key__in=self.scope) if self.scope else []
+        access_ranges = AccessRange.Query.filter(key__in=list(self.scope)) if self.scope else []
         access_token.scope = access_ranges
         access_token.save()
         return access_token
@@ -397,7 +398,7 @@ class TokenGenerator(object):
         self.access_token.refresh_token = KeyGenerator(REFRESH_TOKEN_LENGTH)()
         self.access_token.expire = TimestampGenerator(ACCESS_TOKEN_EXPIRATION)()
         if self.scope:
-            self.access_token.scope = AccessRange.objects.filter(key__in=self.scope)
+            self.access_token.scope = AccessRange.Query.filter(key__in=list(self.scope))
         elif not self.access_token.scope.exists():
             self.access_token.scope = []
         self.access_token.save()
@@ -405,13 +406,13 @@ class TokenGenerator(object):
 
     def _get_client_credentials_token(self):
         """Generate an access token after client_credentials authorization."""
-        access_token = AccessToken.objects.create(
+        access_token = AccessToken.Query.create(
             user=self.client.user,
             client=self.client,
             refreshable=self.refreshable)
         if self.authentication_method == MAC:
             access_token.mac_key = KeyGenerator(MAC_KEY_LENGTH)()
-        access_ranges = AccessRange.objects.filter(key__in=self.scope) if self.scope else []
-        access_token.scope = access_ranges
+        access_ranges = AccessRange.Query.filter(key__in=list(self.scope)) if self.scope else []
+        access_token.scope.add(*access_ranges)
         access_token.save()
         return access_token

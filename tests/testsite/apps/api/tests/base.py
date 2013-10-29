@@ -3,7 +3,7 @@
 try: import simplejson as json
 except ImportError: import json
 from oauth2app.objects import Client
-from parse_rest.user import User
+from django_parse_rest.objects import User
 from django.test.client import Client as DjangoTestClient
 from django.utils import unittest
 from base64 import b64encode
@@ -27,6 +27,7 @@ class BaseTestCase(unittest.TestCase):
     client_application = None
 
     def setUp(self):
+
         self.user = User.signup(
             USER_USERNAME,
             USER_PASSWORD,
@@ -52,6 +53,7 @@ class BaseTestCase(unittest.TestCase):
             "client_id":self.client_application.key,
             "redirect_uri":REDIRECT_URI,
             "response_type":"code"}
+        #import pdb; pdb.set_trace()
         response = user.get("/oauth2/authorize_no_scope?%s" % urlencode(parameters))
         qs = parse_qs(urlparse(response['location']).query)
         code = qs['code']

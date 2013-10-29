@@ -8,10 +8,12 @@ try: import simplejson as json
 except ImportError: import json
 from hashlib import sha256
 from urlparse import parse_qsl
+from parse_rest.query import QueryResourceDoesNotExist, QueryResourceMultipleResultsReturned
 from django.conf import settings
 from django.http import HttpResponse
 from .exceptions import OAuth2Exception
-from .models import AccessToken, AccessRange, TimestampGenerator
+from .objects import AccessToken, AccessRange 
+from .utils import TimestampGenerator
 from .consts import REALM, AUTHENTICATION_METHOD, MAC, BEARER
 
 class AuthenticationException(OAuth2Exception):
@@ -48,7 +50,7 @@ class Authenticator(object):
 
     **Kwargs:**
 
-    * *scope:* An iterable of oauth2app.models.AccessRange objects representing
+    * *scope:* An iterable of oauth2app.objects.AccessRange objects representing
       the scope the authenticator will authenticate.
       *Default None*
     * *authentication_method:* Accepted authentication methods. Possible
@@ -74,12 +76,13 @@ class Authenticator(object):
                 " are oauth2app.consts.MAC, oauth2app.consts.BEARER, "
                 "oauth2app.consts.MAC | oauth2app.consts.BEARER")
         self.authentication_method = authentication_method
-        if scope is None:
-            self.authorized_scope = None
-        elif isinstance(scope, AccessRange):
-            self.authorized_scope = set([scope.key])
-        else:
+        try:
             self.authorized_scope = set([x.key for x in scope])
+        except TypeError:
+            try:
+                self.authorized_scope = set([scope.key])
+            except AttributeError:
+                self.authorized_scope = None
 
     def validate(self, request):
         """Validate the request. Raises an AuthenticationException if the
@@ -138,8 +141,8 @@ class Authenticator(object):
         if self.authentication_method & BEARER == 0:
             raise InvalidToken("Bearer authentication is not supported.")
         try:
-            self.access_token = AccessToken.objects.get(token=token)
-        except AccessToken.DoesNotExist:
+            self.access_token = AccessToken.Query.get(token=token)
+        except QueryResourceDoesNotExist:
             raise InvalidToken("Token doesn't exist")
 
     def _validate_mac(self, mac_header):
@@ -278,7 +281,7 @@ class JSONAuthenticator(Authenticator):
 
     **Kwargs:**
 
-    * *scope:* A iterable of oauth2app.models.AccessRange objects.
+    * *scope:* A iterable of oauth2app.objects.AccessRange objects.
     """
 
     callback = None

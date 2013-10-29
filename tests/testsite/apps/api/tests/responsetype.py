@@ -4,7 +4,7 @@ from urlparse import urlparse, parse_qs
 from urllib import urlencode
 from django.utils import unittest
 from django.test.client import Client as DjangoTestClient
-from parse_rest.user import User
+from django_parse_rest.objects import User
 from oauth2app.objects import Client
 from .base import BaseTestCase
 

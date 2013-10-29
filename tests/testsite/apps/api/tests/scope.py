@@ -7,8 +7,8 @@ from urlparse import urlparse, parse_qs
 from urllib import urlencode
 from django.utils import unittest
 from django.test.client import Client as DjangoTestClient
-from parse_rest.user import User
-from oauth2app.objects import Client
+from django_parse_rest.objects import User
+from oauth2app.objects import Client, AccessRange
 from .base import BaseTestCase
 
 
@@ -27,6 +27,20 @@ class ScopeTestCase(BaseTestCase):
     user = None
     client_holder = None
     client_application = None
+
+    def setUp(self):
+        super(ScopeTestCase, self).setUp()
+        self.ar_first_name = AccessRange.Query.create(
+            key="first_name",
+        )
+        self.ar_last_name = AccessRange.Query.create(
+            key="last_name",
+        )
+
+    def tearDown(self):
+        self.ar_first_name.delete()
+        self.ar_last_name.delete()
+        super(ScopeTestCase, self).tearDown()
 
     def test_00_first_name_scope(self):
         user = DjangoTestClient()

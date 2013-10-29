@@ -40,9 +40,6 @@ class Code(Object):
     redirect_uri = ParseField()
     scope = ParseManyToManyField(AccessRange)
 
-    def scope(self):
-        #TODO should handle the M2M
-        pass
 
 class MACNonce(Object):
     access_token = ParseField()

@@ -3,6 +3,15 @@
 try: import simplejson as json
 except ImportError: import json
 from .base import BaseTestCase
+from django.test.client import Client as DjangoTestClient
+USER_USERNAME = "testuser"
+USER_PASSWORD = "testpassword"
+USER_EMAIL = "user@example.com"
+USER_FIRSTNAME = "Foo"
+USER_LASTNAME = "Bar"
+CLIENT_USERNAME = "client"
+CLIENT_EMAIL = "client@example.com"
+REDIRECT_URI = "http://example.com/callback"
 
 class JSONTestCase(BaseTestCase):
 

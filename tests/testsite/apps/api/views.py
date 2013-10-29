@@ -21,7 +21,7 @@ def first_name_str(request):
         authenticator.validate(request)
     except AuthenticationException:
         return authenticator.error_response()
-    return HttpResponse(authenticator.user.first_name)
+    return HttpResponse(authenticator.user['first_name'])
 
 
 def last_name_str(request):
@@ -31,7 +31,7 @@ def last_name_str(request):
         authenticator.validate(request)
     except AuthenticationException:
         return authenticator.error_response()
-    return HttpResponse(authenticator.user.last_name)
+    return HttpResponse(authenticator.user['last_name'])
 
 def first_and_last_name_str(request):
     scope = AccessRange.objects.filter(key__in=["first_name", "last_name"])
@@ -40,7 +40,7 @@ def first_and_last_name_str(request):
         authenticator.validate(request)
     except AuthenticationException:
         return authenticator.error_response()
-    return HttpResponse(authenticator.user.first_name +  " " + authenticator.user.last_name)
+    return HttpResponse(authenticator.user['first_name'] +  " " + authenticator.user['last_name'])
 
 def email_str(request):
     authenticator = Authenticator()
@@ -48,7 +48,7 @@ def email_str(request):
         authenticator.validate(request)
     except AuthenticationException:
         return authenticator.error_response()
-    return HttpResponse(authenticator.user.email)
+    return HttpResponse(authenticator.user['email'])
 
 
 def email_json(request):
@@ -57,6 +57,6 @@ def email_json(request):
         authenticator.validate(request)
     except AuthenticationException:
         return authenticator.error_response()
-    return authenticator.response({"email":authenticator.user.email})
+    return authenticator.response({"email":authenticator.user['email']})
 
 
