@@ -14,6 +14,8 @@ from .consts import ACCESS_TOKEN_EXPIRATION, MAC_KEY_LENGTH, REFRESHABLE
 from .consts import CODE_KEY_LENGTH, CODE_EXPIRATION
 from .utils import TimestampGenerator, KeyGenerator
 
+AUTH_USER_MODEL = getattr(settings, 'AUTH_USER_MODEL', 'auth.user')
+
 
 class Client(models.Model):
     """Stores client authentication data.
