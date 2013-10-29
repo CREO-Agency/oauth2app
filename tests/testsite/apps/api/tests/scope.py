@@ -11,7 +11,6 @@ from django_parse_rest.objects import User
 from oauth2app.objects import Client, AccessRange
 from .base import BaseTestCase
 
-
 USER_USERNAME = "testuser"
 USER_PASSWORD = "testpassword"
 USER_EMAIL = "user@example.com"

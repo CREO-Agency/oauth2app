@@ -6,7 +6,7 @@
 
 from hashlib import sha512
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 from .consts import CLIENT_KEY_LENGTH, CLIENT_SECRET_LENGTH
 from .consts import SCOPE_LENGTH
 from .consts import ACCESS_TOKEN_LENGTH, REFRESH_TOKEN_LENGTH
@@ -21,7 +21,7 @@ class Client(models.Model):
     **Args:**
 
     * *name:* A string representing the client name.
-    * *user:* A django.contrib.auth.models.User object representing the client
+    * *user:* A Django User object representing the client
        owner.
 
     **Kwargs:**
@@ -37,7 +37,7 @@ class Client(models.Model):
 
     """
     name = models.CharField(max_length=256)
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(AUTH_USER_MODEL)
     description = models.TextField(null=True, blank=True)
     key = models.CharField(
         unique=True,
@@ -75,7 +75,7 @@ class AccessToken(models.Model):
     **Args:**
 
     * *client:* A oauth2app.models.Client object
-    * *user:* A django.contrib.auth.models.User object
+    * *user:* A Django User object
 
     **Kwargs:**
 
@@ -92,7 +92,7 @@ class AccessToken(models.Model):
 
     """
     client = models.ForeignKey(Client)
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(AUTH_USER_MODEL)
     token = models.CharField(
         unique=True,
         max_length=ACCESS_TOKEN_LENGTH,
@@ -126,7 +126,7 @@ class Code(models.Model):
     **Args:**
 
     * *client:* A oauth2app.models.Client object
-    * *user:* A django.contrib.auth.models.User object
+    * *user:* A Django User object
 
     **Kwargs:**
 
@@ -140,7 +140,7 @@ class Code(models.Model):
 
     """
     client = models.ForeignKey(Client)
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(AUTH_USER_MODEL)
     key = models.CharField(
         unique=True,
         max_length=CODE_KEY_LENGTH,
